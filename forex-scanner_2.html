@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confluence — FX Signal Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0A0D10;
+    --panel: #12171C;
+    --panel-2: #171D23;
+    --line: #232B32;
+    --text: #E9EDEF;
+    --muted: #7C8894;
+    --bull: #37D07A;
+    --bull-dim: #1C4A34;
+    --bear: #FF5C5C;
+    --bear-dim: #4A1F24;
+    --neutral: #8A93A0;
+    --amber: #E8A93B;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; background:var(--bg); color:var(--text); font-family:var(--sans); }
+  body{ min-height:100vh; }
+
+  .wrap{ max-width:1180px; margin:0 auto; padding:28px 20px 60px; }
+
+  /* ---- Header ---- */
+  header{ display:flex; flex-wrap:wrap; gap:16px; align-items:flex-end; justify-content:space-between; margin-bottom:22px; border-bottom:1px solid var(--line); padding-bottom:20px; }
+  .brand{ display:flex; align-items:baseline; gap:10px; }
+  .brand-mark{ font-family:var(--mono); font-weight:700; font-size:13px; letter-spacing:0.14em; color:var(--amber); border:1px solid var(--amber); padding:3px 7px; border-radius:3px; }
+  h1{ font-size:22px; margin:0; font-weight:800; letter-spacing:-0.01em; }
+  .sub{ color:var(--muted); font-size:13px; margin-top:2px; font-family:var(--mono); }
+
+  .controls{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  input[type=password], input[type=text]{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    font-family:var(--mono); font-size:12.5px; padding:9px 11px; border-radius:5px; width:220px;
+    outline:none;
+  }
+  input::placeholder{ color:#4E5A64; }
+  input:focus{ border-color:var(--amber); }
+  button{
+    font-family:var(--sans); font-weight:600; font-size:13px; border-radius:5px; border:1px solid var(--line);
+    padding:9px 16px; cursor:pointer; background:var(--panel-2); color:var(--text); transition:border-color .15s, background .15s;
+  }
+  button:hover{ border-color:#3A454E; }
+  button.primary{ background:var(--amber); color:#1A1400; border-color:var(--amber); }
+  button.primary:hover{ filter:brightness(1.08); }
+  button:disabled{ opacity:0.45; cursor:default; }
+
+  .status-line{ font-family:var(--mono); font-size:11.5px; color:var(--muted); margin-top:10px; min-height:16px; }
+  .status-line.err{ color:var(--bear); }
+  .status-line.ok{ color:var(--bull); }
+
+  /* ---- Legend / key ---- */
+  .legend{ display:flex; gap:18px; flex-wrap:wrap; font-family:var(--mono); font-size:11px; color:var(--muted); margin:18px 0 20px; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .dot{ width:7px; height:7px; border-radius:50%; display:inline-block; }
+  .dot.bull{ background:var(--bull); } .dot.bear{ background:var(--bear); } .dot.neutral{ background:var(--neutral); }
+
+  /* ---- Section headers ---- */
+  .section-label{ font-family:var(--mono); font-size:11px; letter-spacing:0.12em; color:var(--muted); text-transform:uppercase; margin:26px 0 10px; display:flex; align-items:center; gap:10px; }
+  .section-label::after{ content:''; flex:1; height:1px; background:var(--line); }
+
+  /* ---- Grid ---- */
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:12px; }
+
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:15px 16px 14px; position:relative; overflow:hidden; }
+  .card.empty{ color:var(--muted); font-family:var(--mono); font-size:12px; text-align:center; padding:30px 10px; }
+  .card-top{ display:flex; justify-content:space-between; align-items:flex-start; }
+  .pair{ font-family:var(--mono); font-weight:700; font-size:15.5px; letter-spacing:0.01em; }
+  .price{ font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-top:2px; }
+  .verdict{ font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:0.06em; padding:3px 8px; border-radius:4px; text-transform:uppercase; white-space:nowrap; }
+  .verdict.buy{ background:var(--bull-dim); color:var(--bull); }
+  .verdict.sell{ background:var(--bear-dim); color:var(--bear); }
+  .verdict.flat{ background:#232B32; color:var(--neutral); }
+
+  /* Confluence meter (signature element) */
+  .meter{ margin:12px 0 11px; }
+  .meter-track{ display:flex; height:8px; border-radius:4px; overflow:hidden; background:var(--panel-2); border:1px solid var(--line); }
+  .meter-seg{ flex:1; border-right:1px solid var(--bg); }
+  .meter-seg:last-child{ border-right:none; }
+  .meter-seg.bull{ background:var(--bull); }
+  .meter-seg.bear{ background:var(--bear); }
+  .meter-seg.off{ background:transparent; }
+  .meter-caption{ font-family:var(--mono); font-size:10.5px; color:var(--muted); margin-top:5px; display:flex; justify-content:space-between; }
+
+  .chips{ display:grid; grid-template-columns:1fr 1fr; gap:6px 8px; margin-top:10px; }
+  .chip{ display:flex; justify-content:space-between; align-items:center; font-family:var(--mono); font-size:10.5px; padding:5px 7px; border-radius:4px; background:var(--panel-2); border:1px solid var(--line); }
+  .chip .ind{ color:var(--muted); }
+  .chip .sig{ font-weight:700; }
+  .chip .sig.bull{ color:var(--bull); }
+  .chip .sig.bear{ color:var(--bear); }
+  .chip .sig.neutral{ color:var(--neutral); }
+
+  .exit{ margin-top:11px; padding-top:11px; border-top:1px dashed var(--line); }
+  .exit-row{ display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px; padding:2px 0; }
+  .exit-row .lbl{ color:var(--muted); }
+  .exit-row .val{ font-weight:600; }
+  .exit-row .val.stop{ color:var(--bear); }
+  .exit-row .val.target{ color:var(--bull); }
+  .exit-rr{ font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:4px; text-align:right; }
+
+  .disclaimer{ margin-top:34px; padding:14px 16px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--muted); font-size:12px; line-height:1.55; }
+  .disclaimer b{ color:var(--text); }
+
+  .howto{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px 18px; margin-top:4px; font-size:13px; line-height:1.6; color:var(--muted); }
+  .howto b{ color:var(--text); }
+  .howto a{ color:var(--amber); text-decoration:none; }
+  .howto a:hover{ text-decoration:underline; }
+
+  @media (max-width:640px){
+    header{ flex-direction:column; align-items:stretch; }
+    .controls{ width:100%; }
+    input[type=password]{ flex:1; width:auto; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="brand">
+        <span class="brand-mark">FX</span>
+        <h1>Confluence Scanner</h1>
+      </div>
+      <div class="sub">6-indicator ranking · RSI · MACD · MA(20/50) · Bollinger · Stochastic · ADX/DI</div>
+    </div>
+    <div class="controls">
+      <input id="apiKey" type="password" placeholder="Twelve Data API key" autocomplete="off">
+      <button id="scanBtn" class="primary">Run scan</button>
+    </div>
+  </header>
+
+  <div id="status" class="status-line">Enter your free Twelve Data API key, then run a scan.</div>
+
+  <div class="legend">
+    <span><i class="dot bull"></i> Bullish signal</span>
+    <span><i class="dot bear"></i> Bearish signal</span>
+    <span><i class="dot neutral"></i> Neutral / no edge</span>
+  </div>
+
+  <div class="section-label">Strongest setups</div>
+  <div id="grid" class="grid">
+    <div class="card empty">No data yet — run a scan to populate.</div>
+  </div>
+
+  <div class="disclaimer">
+    <b>Not investment advice.</b> This tool only reports what standard technical indicators say about recent price action — it does not know your risk tolerance, account size, or news events. Indicators lag price and can conflict; treat a high "confluence score" as a prompt to research further, not a signal to trade.<br><br>
+    <b>Stop loss / take profit levels</b> are mechanical: entry ≈ current price, stop = 1.5×ATR(14) against the position, target = 2.5×ATR(14) in its favor. ATR reflects the pair's recent typical range, not support/resistance, news risk, or your account size — treat these as a volatility-scaled starting point to adjust, not a level to follow blindly. Forex trading carries substantial risk of loss.
+  </div>
+
+  <div class="section-label">Setup</div>
+  <div class="howto">
+    1. Get a free key at <a href="https://twelvedata.com/pricing" target="_blank" rel="noopener">twelvedata.com</a> (free tier: 8 requests/minute, 800/day — plenty for manual scans).<br>
+    2. Paste it above and click <b>Run scan</b>. The key stays in this browser tab only — it's never saved or sent anywhere but Twelve Data.<br>
+    3. Each scan pulls ~13 pairs on the 1-hour timeframe (100 candles) and computes indicators locally. Free-tier rate limits mean a full scan takes about 30–45 seconds — that's normal.<br>
+    4. Re-run whenever you want a fresh read. There's no auto-refresh, to stay within free-tier limits.
+  </div>
+
+</div>
+
+<script>
+const PAIRS = [
+  // majors
+  'EUR/USD','GBP/USD','USD/JPY','USD/CHF','AUD/USD','USD/CAD','NZD/USD',
+  // a few exotics
+  'USD/MXN','USD/ZAR','USD/TRY','USD/SGD','EUR/TRY','USD/NOK'
+];
+
+const INTERVAL = '1h';
+const OUTPUTSIZE = 120;
+
+const statusEl = document.getElementById('status');
+const gridEl = document.getElementById('grid');
+const scanBtn = document.getElementById('scanBtn');
+const keyInput = document.getElementById('apiKey');
+
+function setStatus(msg, kind){
+  statusEl.textContent = msg;
+  statusEl.className = 'status-line' + (kind ? ' ' + kind : '');
+}
+
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+// ---------- indicator math ----------
+function sma(values, period){
+  const out = new Array(values.length).fill(null);
+  let sum = 0;
+  for(let i=0;i<values.length;i++){
+    sum += values[i];
+    if(i >= period) sum -= values[i-period];
+    if(i >= period-1) out[i] = sum/period;
+  }
+  return out;
+}
+
+function ema(values, period){
+  const out = new Array(values.length).fill(null);
+  const k = 2/(period+1);
+  let prev = null;
+  for(let i=0;i<values.length;i++){
+    if(values[i] == null){ out[i]=null; continue; }
+    if(prev == null){
+      // seed with SMA of first `period` values
+      if(i >= period-1){
+        let sum=0;
+        for(let j=i-period+1;j<=i;j++) sum += values[j];
+        prev = sum/period;
+        out[i] = prev;
+      }
+    } else {
+      prev = values[i]*k + prev*(1-k);
+      out[i] = prev;
+    }
+  }
+  return out;
+}
+
+function rsi(closes, period=14){
+  const out = new Array(closes.length).fill(null);
+  let gains=0, losses=0;
+  for(let i=1;i<closes.length;i++){
+    const change = closes[i]-closes[i-1];
+    const gain = Math.max(change,0);
+    const loss = Math.max(-change,0);
+    if(i <= period){
+      gains += gain; losses += loss;
+      if(i === period){
+        let avgGain = gains/period, avgLoss = losses/period;
+        out[i] = avgLoss === 0 ? 100 : 100 - (100/(1+avgGain/avgLoss));
+        var runningGain = avgGain, runningLoss = avgLoss;
+      }
+    } else {
+      runningGain = (runningGain*(period-1)+gain)/period;
+      runningLoss = (runningLoss*(period-1)+loss)/period;
+      out[i] = runningLoss === 0 ? 100 : 100 - (100/(1+runningGain/runningLoss));
+    }
+  }
+  return out;
+}
+
+function macd(closes, fast=12, slow=26, signalPeriod=9){
+  const emaFast = ema(closes, fast);
+  const emaSlow = ema(closes, slow);
+  const macdLine = closes.map((_,i) => (emaFast[i]!=null && emaSlow[i]!=null) ? emaFast[i]-emaSlow[i] : null);
+  const signalLine = ema(macdLine.map(v=>v==null?0:v), signalPeriod).map((v,i)=> macdLine[i]==null?null:v);
+  const hist = closes.map((_,i)=> (macdLine[i]!=null && signalLine[i]!=null) ? macdLine[i]-signalLine[i] : null);
+  return { macdLine, signalLine, hist };
+}
+
+function bollinger(closes, period=20, mult=2){
+  const mid = sma(closes, period);
+  const upper = new Array(closes.length).fill(null);
+  const lower = new Array(closes.length).fill(null);
+  for(let i=0;i<closes.length;i++){
+    if(mid[i]==null) continue;
+    let sumSq=0;
+    for(let j=i-period+1;j<=i;j++) sumSq += Math.pow(closes[j]-mid[i],2);
+    const sd = Math.sqrt(sumSq/period);
+    upper[i] = mid[i] + mult*sd;
+    lower[i] = mid[i] - mult*sd;
+  }
+  return { mid, upper, lower };
+}
+
+function stochastic(highs, lows, closes, period=14, smoothK=3, smoothD=3){
+  const rawK = new Array(closes.length).fill(null);
+  for(let i=0;i<closes.length;i++){
+    if(i < period-1) continue;
+    let hh=-Infinity, ll=Infinity;
+    for(let j=i-period+1;j<=i;j++){ hh=Math.max(hh,highs[j]); ll=Math.min(ll,lows[j]); }
+    rawK[i] = hh===ll ? 50 : ((closes[i]-ll)/(hh-ll))*100;
+  }
+  const k = sma(rawK.map(v=>v==null?0:v), smoothK).map((v,i)=> rawK[i]==null?null:v);
+  const d = sma(k.map(v=>v==null?0:v), smoothD).map((v,i)=> k[i]==null?null:v);
+  return { k, d };
+}
+
+function adx(highs, lows, closes, period=14){
+  const len = closes.length;
+  const plusDM = new Array(len).fill(0);
+  const minusDM = new Array(len).fill(0);
+  const tr = new Array(len).fill(0);
+  for(let i=1;i<len;i++){
+    const upMove = highs[i]-highs[i-1];
+    const downMove = lows[i-1]-lows[i];
+    plusDM[i] = (upMove>downMove && upMove>0) ? upMove : 0;
+    minusDM[i] = (downMove>upMove && downMove>0) ? downMove : 0;
+    tr[i] = Math.max(highs[i]-lows[i], Math.abs(highs[i]-closes[i-1]), Math.abs(lows[i]-closes[i-1]));
+  }
+  // Wilder smoothing
+  function wilderSmooth(arr, period){
+    const out = new Array(arr.length).fill(null);
+    let sum=0;
+    for(let i=1;i<=period;i++) sum += arr[i] || 0;
+    out[period] = sum;
+    for(let i=period+1;i<arr.length;i++){
+      out[i] = out[i-1] - (out[i-1]/period) + arr[i];
+    }
+    return out;
+  }
+  const trS = wilderSmooth(tr, period);
+  const plusDMS = wilderSmooth(plusDM, period);
+  const minusDMS = wilderSmooth(minusDM, period);
+  const plusDI = new Array(len).fill(null);
+  const minusDI = new Array(len).fill(null);
+  const dx = new Array(len).fill(null);
+  for(let i=0;i<len;i++){
+    if(trS[i] == null || trS[i] === 0) continue;
+    plusDI[i] = 100*(plusDMS[i]/trS[i]);
+    minusDI[i] = 100*(minusDMS[i]/trS[i]);
+    const sum = plusDI[i]+minusDI[i];
+    dx[i] = sum===0 ? 0 : 100*Math.abs(plusDI[i]-minusDI[i])/sum;
+  }
+  // ADX = Wilder-smoothed average of DX
+  const adxOut = new Array(len).fill(null);
+  const firstValid = dx.findIndex(v=>v!=null);
+  if(firstValid>=0 && firstValid+period<=len){
+    let sum=0;
+    for(let i=firstValid;i<firstValid+period;i++) sum += dx[i]||0;
+    adxOut[firstValid+period-1] = sum/period;
+    for(let i=firstValid+period;i<len;i++){
+      adxOut[i] = (adxOut[i-1]*(period-1) + (dx[i]||0))/period;
+    }
+  }
+  return { adx: adxOut, plusDI, minusDI };
+}
+
+function atr(highs, lows, closes, period=14){
+  const len = closes.length;
+  const tr = new Array(len).fill(null);
+  for(let i=1;i<len;i++){
+    tr[i] = Math.max(highs[i]-lows[i], Math.abs(highs[i]-closes[i-1]), Math.abs(lows[i]-closes[i-1]));
+  }
+  const out = new Array(len).fill(null);
+  let sum=0;
+  for(let i=1;i<=period;i++) sum += tr[i]||0;
+  out[period] = sum/period;
+  for(let i=period+1;i<len;i++){
+    out[i] = (out[i-1]*(period-1) + (tr[i]||0))/period;
+  }
+  return out;
+}
+
+function last(arr){
+  for(let i=arr.length-1;i>=0;i--) if(arr[i]!=null) return arr[i];
+  return null;
+}
+function lastN(arr,n){
+  const out=[];
+  for(let i=arr.length-1;i>=0 && out.length<n;i--) if(arr[i]!=null) out.unshift(arr[i]);
+  return out;
+}
+
+// ---------- signal engine ----------
+function evaluateSignals(candles){
+  const closes = candles.map(c=>c.close);
+  const highs = candles.map(c=>c.high);
+  const lows = candles.map(c=>c.low);
+
+  const rsiArr = rsi(closes,14);
+  const macdRes = macd(closes);
+  const sma20 = sma(closes,20);
+  const sma50 = sma(closes,50);
+  const bb = bollinger(closes,20,2);
+  const stoch = stochastic(highs,lows,closes,14,3,3);
+  const adxRes = adx(highs,lows,closes,14);
+  const atrArr = atr(highs,lows,closes,14);
+  const atrVal = last(atrArr);
+
+  const price = last(closes);
+  const signals = [];
+
+  // RSI
+  const rsiVal = last(rsiArr);
+  signals.push({
+    name:'RSI(14)', value: rsiVal==null?null:rsiVal.toFixed(1),
+    sig: rsiVal==null ? 'neutral' : rsiVal<30 ? 'bull' : rsiVal>70 ? 'bear' : 'neutral'
+  });
+
+  // MACD
+  const histVals = lastN(macdRes.hist,2);
+  const histNow = histVals.length?histVals[histVals.length-1]:null;
+  const histPrev = histVals.length>1?histVals[0]:null;
+  let macdSig='neutral';
+  if(histNow!=null){
+    if(histNow>0 && (histPrev==null || histNow>=histPrev)) macdSig='bull';
+    else if(histNow<0 && (histPrev==null || histNow<=histPrev)) macdSig='bear';
+  }
+  signals.push({ name:'MACD', value: histNow==null?null:histNow.toFixed(5), sig: macdSig });
+
+  // MA crossover
+  const s20 = last(sma20), s50 = last(sma50);
+  let maSig='neutral';
+  if(s20!=null && s50!=null) maSig = s20>s50 ? 'bull' : s20<s50 ? 'bear' : 'neutral';
+  signals.push({ name:'MA 20/50', value: (s20!=null&&s50!=null)?(s20>s50?'20>50':'20<50'):null, sig:maSig });
+
+  // Bollinger
+  const bbU = last(bb.upper), bbL = last(bb.lower);
+  let bbSig='neutral';
+  if(price!=null && bbU!=null && bbL!=null){
+    if(price<=bbL) bbSig='bull';
+    else if(price>=bbU) bbSig='bear';
+  }
+  signals.push({ name:'Bollinger', value: (bbU&&bbL)?`${bbL.toFixed(4)}-${bbU.toFixed(4)}`:null, sig:bbSig });
+
+  // Stochastic
+  const kVals = lastN(stoch.k,2), dVals = lastN(stoch.d,2);
+  const kNow = kVals.length?kVals[kVals.length-1]:null;
+  const dNow = dVals.length?dVals[dVals.length-1]:null;
+  let stochSig='neutral';
+  if(kNow!=null && dNow!=null){
+    if(kNow<20 && kNow>dNow) stochSig='bull';
+    else if(kNow>80 && kNow<dNow) stochSig='bear';
+  }
+  signals.push({ name:'Stochastic', value: kNow==null?null:kNow.toFixed(1), sig:stochSig });
+
+  // ADX/DI
+  const adxVal = last(adxRes.adx), pDI = last(adxRes.plusDI), mDI = last(adxRes.minusDI);
+  let adxSig='neutral';
+  if(adxVal!=null && pDI!=null && mDI!=null && adxVal>20){
+    adxSig = pDI>mDI ? 'bull' : 'bear';
+  }
+  signals.push({ name:'ADX/DI', value: adxVal==null?null:adxVal.toFixed(1), sig:adxSig });
+
+  const score = signals.reduce((s,x)=> s + (x.sig==='bull'?1:x.sig==='bear'?-1:0), 0);
+
+  return { price, signals, score, atr: atrVal };
+}
+
+// Volatility-based exit levels. Only meaningful once there's a directional lean.
+function computeExitLevels(price, atrVal, direction){
+  if(price==null || atrVal==null || direction==='flat') return null;
+  const STOP_MULT = 1.5;
+  const TARGET_MULT = 2.5;
+  if(direction==='buy'){
+    return {
+      stop: price - STOP_MULT*atrVal,
+      target: price + TARGET_MULT*atrVal,
+      rr: (TARGET_MULT/STOP_MULT).toFixed(2)
+    };
+  }
+  return {
+    stop: price + STOP_MULT*atrVal,
+    target: price - TARGET_MULT*atrVal,
+    rr: (TARGET_MULT/STOP_MULT).toFixed(2)
+  };
+}
+
+function formatPrice(pair, value){
+  if(value==null) return '—';
+  const decimals = pair.includes('JPY') ? 3 : 5;
+  return value.toFixed(decimals);
+}
+
+// ---------- data fetching ----------
+async function fetchSeries(pair, apiKey){
+  const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(pair)}&interval=${INTERVAL}&outputsize=${OUTPUTSIZE}&apikey=${encodeURIComponent(apiKey)}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if(data.status === 'error' || data.code){
+    throw new Error(data.message || `Failed to fetch ${pair}`);
+  }
+  if(!data.values) throw new Error(`No data returned for ${pair}`);
+  const candles = data.values
+    .map(v => ({ time:v.datetime, open:+v.open, high:+v.high, low:+v.low, close:+v.close }))
+    .reverse(); // oldest -> newest
+  return candles;
+}
+
+// ---------- rendering ----------
+function verdictFromScore(score){
+  if(score >= 3) return { label:'Strong buy', cls:'buy' };
+  if(score >= 1) return { label:'Buy lean', cls:'buy' };
+  if(score <= -3) return { label:'Strong sell', cls:'sell' };
+  if(score <= -1) return { label:'Sell lean', cls:'sell' };
+  return { label:'Flat', cls:'flat' };
+}
+
+function renderMeter(signals){
+  const segs = signals.map(s => `<div class="meter-seg ${s.sig==='neutral'?'off':s.sig}"></div>`).join('');
+  const bullCount = signals.filter(s=>s.sig==='bull').length;
+  const bearCount = signals.filter(s=>s.sig==='bear').length;
+  return `
+    <div class="meter">
+      <div class="meter-track">${segs}</div>
+      <div class="meter-caption"><span>${bullCount} bullish</span><span>${bearCount} bearish</span></div>
+    </div>`;
+}
+
+function renderChips(signals){
+  return `<div class="chips">${signals.map(s => `
+    <div class="chip">
+      <span class="ind">${s.name}</span>
+      <span class="sig ${s.sig}">${s.value ?? '—'}</span>
+    </div>`).join('')}</div>`;
+}
+
+function renderExit(pair, result, direction){
+  const levels = computeExitLevels(result.price, result.atr, direction);
+  if(!levels) return '';
+  return `
+    <div class="exit">
+      <div class="exit-row"><span class="lbl">Entry (~market)</span><span class="val">${formatPrice(pair, result.price)}</span></div>
+      <div class="exit-row"><span class="lbl">Stop loss</span><span class="val stop">${formatPrice(pair, levels.stop)}</span></div>
+      <div class="exit-row"><span class="lbl">Take profit</span><span class="val target">${formatPrice(pair, levels.target)}</span></div>
+      <div class="exit-rr">R:R ≈ 1 : ${levels.rr} · based on ATR(14)</div>
+    </div>`;
+}
+
+function renderCard(pair, result){
+  const v = verdictFromScore(result.score);
+  const direction = v.cls === 'buy' ? 'buy' : v.cls === 'sell' ? 'sell' : 'flat';
+  return `
+    <div class="card">
+      <div class="card-top">
+        <div>
+          <div class="pair">${pair}</div>
+          <div class="price">${formatPrice(pair, result.price)}</div>
+        </div>
+        <div class="verdict ${v.cls}">${v.label}</div>
+      </div>
+      ${renderMeter(result.signals)}
+      ${renderChips(result.signals)}
+      ${renderExit(pair, result, direction)}
+    </div>`;
+}
+
+async function runScan(){
+  const apiKey = keyInput.value.trim();
+  if(!apiKey){
+    setStatus('Enter your Twelve Data API key first.', 'err');
+    return;
+  }
+  scanBtn.disabled = true;
+  const results = [];
+  let errors = 0;
+
+  for(let i=0;i<PAIRS.length;i++){
+    const pair = PAIRS[i];
+    setStatus(`Scanning ${pair}… (${i+1}/${PAIRS.length})`);
+    try{
+      const candles = await fetchSeries(pair, apiKey);
+      const evald = evaluateSignals(candles);
+      results.push({ pair, ...evald });
+    }catch(e){
+      errors++;
+      console.error(pair, e.message);
+    }
+    // stay under free-tier 8 req/min -> ~1 req per 8s to be safe with a small buffer
+    if(i < PAIRS.length-1) await sleep(7800);
+  }
+
+  results.sort((a,b) => Math.abs(b.score) - Math.abs(a.score));
+
+  if(results.length === 0){
+    gridEl.innerHTML = '<div class="card empty">No results — check your API key and try again.</div>';
+    setStatus('Scan failed. Check your API key and connection.', 'err');
+  } else {
+    gridEl.innerHTML = results.map(r => renderCard(r.pair, r)).join('');
+    const msg = errors > 0
+      ? `Scan complete with ${errors} pair(s) skipped (rate limit or bad symbol).`
+      : `Scan complete — ${results.length} pairs ranked by confluence strength.`;
+    setStatus(msg, errors>0 ? 'err' : 'ok');
+  }
+
+  scanBtn.disabled = false;
+}
+
+scanBtn.addEventListener('click', runScan);
+keyInput.addEventListener('keydown', e => { if(e.key==='Enter') runScan(); });
+</script>
+</body>
+</html>
