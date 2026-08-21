@@ -106,6 +106,61 @@
   .exit-row .val.target{ color:var(--bull); }
   .exit-rr{ font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:4px; text-align:right; }
 
+  .corr{ margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); font-family:var(--mono); font-size:11px; }
+  .corr-badge{ display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:4px; font-weight:700; letter-spacing:0.02em; }
+  .corr-badge.confirm{ background:var(--bull-dim); color:var(--bull); }
+  .corr-badge.conflict{ background:var(--bear-dim); color:var(--bear); }
+  .corr-badge.independent{ background:#232B32; color:var(--neutral); }
+  .corr-detail{ color:var(--muted); margin-top:5px; line-height:1.4; }
+
+  .scan-summary{ font-family:var(--mono); font-size:11.5px; color:var(--muted); margin:-4px 0 16px; padding:10px 13px; background:var(--panel); border:1px solid var(--line); border-radius:6px; }
+  .scan-summary b{ color:var(--text); }
+
+  /* ---- News / calendar ---- */
+  .news-strip{ display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; }
+  .news-card{
+    flex:0 0 220px; background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    padding:12px 13px; cursor:pointer; transition:border-color .15s;
+  }
+  .news-card:hover{ border-color:var(--amber); }
+  .news-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .news-ccy{ font-family:var(--mono); font-weight:700; font-size:11.5px; color:var(--text); background:var(--panel-2); border:1px solid var(--line); padding:2px 6px; border-radius:4px; }
+  .impact{ font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:0.05em; padding:2px 7px; border-radius:4px; text-transform:uppercase; }
+  .impact.high{ background:var(--bear-dim); color:var(--bear); }
+  .impact.medium{ background:#4A3B14; color:var(--amber); }
+  .impact.low{ background:#232B32; color:var(--neutral); }
+  .news-title{ font-size:13px; font-weight:600; line-height:1.35; margin-bottom:6px; }
+  .news-time{ font-family:var(--mono); font-size:10.5px; color:var(--muted); }
+  .news-empty{ color:var(--muted); font-family:var(--mono); font-size:12px; padding:16px 4px; }
+
+  /* ---- Modal ---- */
+  .modal-backdrop{
+    display:none; position:fixed; inset:0; background:rgba(4,6,8,0.72); backdrop-filter:blur(2px);
+    z-index:50; align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-backdrop.open{ display:flex; }
+  .modal{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px; max-width:480px; width:100%;
+    padding:22px 24px; max-height:85vh; overflow-y:auto;
+  }
+  .modal-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:4px; }
+  .modal-title{ font-size:17px; font-weight:800; letter-spacing:-0.01em; }
+  .modal-close{ background:none; border:none; color:var(--muted); font-size:20px; line-height:1; padding:2px 6px; cursor:pointer; }
+  .modal-close:hover{ color:var(--text); }
+  .modal-meta{ font-family:var(--mono); font-size:11.5px; color:var(--muted); margin:8px 0 16px; display:flex; gap:10px; flex-wrap:wrap; }
+  .modal-section{ margin-bottom:14px; }
+  .modal-section h4{ font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--amber); margin:0 0 5px; }
+  .modal-section p{ font-size:13.5px; line-height:1.55; margin:0; color:var(--text); }
+  .modal-pairs{ display:flex; gap:6px; flex-wrap:wrap; }
+  .modal-pairs span{ font-family:var(--mono); font-size:11px; background:var(--panel-2); border:1px solid var(--line); padding:3px 8px; border-radius:4px; }
+  .modal-fine{ font-size:11px; color:var(--muted); margin-top:16px; padding-top:12px; border-top:1px solid var(--line); line-height:1.5; }
+
+  .scan-summary{ margin-bottom:16px; }
+  .summary-line{ font-family:var(--mono); font-size:11.5px; color:var(--muted); line-height:1.6; padding:8px 12px; background:var(--panel); border:1px solid var(--line); border-radius:6px; margin-bottom:6px; }
+  .summary-tag{ font-weight:700; letter-spacing:0.04em; text-transform:uppercase; padding:2px 7px; border-radius:4px; margin-right:8px; font-size:10px; }
+  .summary-tag.strong{ background:var(--bull-dim); color:var(--bull); }
+  .summary-tag.weak{ background:#232B32; color:var(--neutral); }
+
   .disclaimer{ margin-top:34px; padding:14px 16px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--muted); font-size:12px; line-height:1.55; }
   .disclaimer b{ color:var(--text); }
 
@@ -144,26 +199,60 @@
     <span><i class="dot bull"></i> Bullish signal</span>
     <span><i class="dot bear"></i> Bearish signal</span>
     <span><i class="dot neutral"></i> Neutral / no edge</span>
+    <span>✓ Confirmed = a strongly correlated pair agrees</span>
+    <span>⚠ Conflicting = a strongly correlated pair disagrees</span>
   </div>
 
   <div class="section-label">Strongest setups</div>
+  <div id="scanSummary" class="scan-summary" style="display:none;"></div>
   <div id="grid" class="grid">
     <div class="card empty">No data yet — run a scan to populate.</div>
   </div>
 
   <div class="disclaimer">
     <b>Not investment advice.</b> This tool only reports what standard technical indicators say about recent price action — it does not know your risk tolerance, account size, or news events. Indicators lag price and can conflict; treat a high "confluence score" as a prompt to research further, not a signal to trade.<br><br>
-    <b>Stop loss / take profit levels</b> are mechanical: entry ≈ current price, stop = 1.5×ATR(14) against the position, target = 2.5×ATR(14) in its favor. ATR reflects the pair's recent typical range, not support/resistance, news risk, or your account size — treat these as a volatility-scaled starting point to adjust, not a level to follow blindly. Forex trading carries substantial risk of loss.
+    <b>Stop loss / take profit levels</b> are mechanical: entry ≈ current price, stop = 1.5×ATR(14) against the position, target = 2.5×ATR(14) in its favor. ATR reflects the pair's recent typical range, not support/resistance, news risk, or your account size — treat these as a volatility-scaled starting point to adjust, not a level to follow blindly.<br><br>
+    <b>Correlation adjustments</b> are computed live from this scan's own price data (not a fixed textbook table), so they reflect current market behavior and will drift over time. A "Confirmed" badge means a strongly correlated pair currently agrees — it does not mean two independent confirmations; correlated pairs are often really one shared driver (e.g. broad USD strength) showing up twice. Forex trading carries substantial risk of loss.
   </div>
+
+  <div class="section-label">Upcoming events</div>
+  <div class="controls" style="margin-bottom:12px;">
+    <input id="newsApiKey" type="password" placeholder="Finnhub API key (news)" autocomplete="off">
+    <button id="newsBtn">Load calendar</button>
+  </div>
+  <div id="newsStrip" class="news-strip"></div>
 
   <div class="section-label">Setup</div>
   <div class="howto">
-    1. Get a free key at <a href="https://twelvedata.com/pricing" target="_blank" rel="noopener">twelvedata.com</a> (free tier: 8 requests/minute, 800/day — plenty for manual scans).<br>
-    2. Paste it above and click <b>Run scan</b>. The key stays in this browser tab only — it's never saved or sent anywhere but Twelve Data.<br>
-    3. Each scan pulls ~13 pairs on the 1-hour timeframe (100 candles) and computes indicators locally. Free-tier rate limits mean a full scan takes about 30–45 seconds — that's normal.<br>
-    4. Re-run whenever you want a fresh read. There's no auto-refresh, to stay within free-tier limits.
+    1. Get a free Twelve Data key at <a href="https://twelvedata.com/pricing" target="_blank" rel="noopener">twelvedata.com</a> (free tier: 8 requests/minute, 800/day) for the indicator scan.<br>
+    2. Get a separate free Finnhub key at <a href="https://finnhub.io/register" target="_blank" rel="noopener">finnhub.io</a> for the upcoming-events calendar below.<br>
+    3. Paste each key into its field and click <b>Run scan</b> / <b>Load calendar</b>. Keys stay in this browser tab only — never saved or sent anywhere but the respective provider.<br>
+    4. A full scan takes ~30–45 seconds (free-tier pacing). Re-run either whenever you want a fresh read — there's no auto-refresh, to stay within free-tier limits.
   </div>
 
+</div>
+
+<div id="modalBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle"></div>
+      <button class="modal-close" id="modalClose">×</button>
+    </div>
+    <div class="modal-meta" id="modalMeta"></div>
+    <div class="modal-section">
+      <h4>What it is</h4>
+      <p id="modalWhat"></p>
+    </div>
+    <div class="modal-section">
+      <h4>Why it can move markets</h4>
+      <p id="modalWhy"></p>
+    </div>
+    <div class="modal-section">
+      <h4>Pairs this could affect</h4>
+      <div class="modal-pairs" id="modalPairs"></div>
+    </div>
+    <div class="modal-fine">Calendar data via an unofficial public feed — times and details can shift. Always verify time-sensitive events independently before trading around them.</div>
+  </div>
 </div>
 
 <script>
@@ -432,7 +521,11 @@ function evaluateSignals(candles){
 
   const score = signals.reduce((s,x)=> s + (x.sig==='bull'?1:x.sig==='bear'?-1:0), 0);
 
-  return { price, signals, score, atr: atrVal };
+  // Trailing returns series, used later for correlation between pairs.
+  const returns = [];
+  for(let i=1;i<closes.length;i++) returns.push((closes[i]-closes[i-1])/closes[i-1]);
+
+  return { price, signals, score, atr: atrVal, returns: returns.slice(-60) };
 }
 
 // Volatility-based exit levels. Only meaningful once there's a directional lean.
@@ -452,6 +545,71 @@ function computeExitLevels(price, atrVal, direction){
     target: price - TARGET_MULT*atrVal,
     rr: (TARGET_MULT/STOP_MULT).toFixed(2)
   };
+}
+
+// ---------- correlation engine ----------
+// Uses the same trailing hourly returns each pair already fetched during this scan —
+// no extra API calls. This is a realized correlation over the scan window, not a
+// fixed textbook table, so it reflects current market behavior and will drift over time.
+const CORR_STRONG = 0.6;   // treat a partner at or above this |r| as "strongly linked"
+const CORR_WEAK = 0.25;    // treat a pair whose best partner is below this as an "isolated mover"
+const CORR_MIN_POINTS = 20; // don't trust a correlation built from fewer aligned points than this
+
+function pearson(x, y){
+  const n = Math.min(x.length, y.length);
+  if(n < CORR_MIN_POINTS) return null;
+  const xs = x.slice(-n), ys = y.slice(-n);
+  const mx = xs.reduce((a,b)=>a+b,0)/n;
+  const my = ys.reduce((a,b)=>a+b,0)/n;
+  let num=0, dx2=0, dy2=0;
+  for(let i=0;i<n;i++){
+    const dx = xs[i]-mx, dy = ys[i]-my;
+    num += dx*dy; dx2 += dx*dx; dy2 += dy*dy;
+  }
+  const denom = Math.sqrt(dx2*dy2);
+  return denom===0 ? 0 : num/denom;
+}
+
+// For each pair, finds its most-correlated partner (positive or negative) among the
+// others in this scan, and how correlated it is with the group on average. Then nudges
+// the confluence score: a strongly-correlated partner confirming the same lean makes the
+// score stronger; one contradicting it makes the score weaker. A pair whose closest
+// relationship is still weak gets flagged as an isolated mover instead.
+function applyCorrelationAdjustments(results){
+  results.forEach(r => {
+    let best = null;
+    let sumAbs = 0, count = 0;
+    results.forEach(o => {
+      if(o.pair === r.pair) return;
+      const c = pearson(r.returns, o.returns);
+      if(c == null) return;
+      sumAbs += Math.abs(c); count++;
+      if(!best || Math.abs(c) > Math.abs(best.corr)) best = { pair:o.pair, corr:c, otherScore:o.score };
+    });
+    r.independence = count ? sumAbs/count : null;
+    r.bestPartner = best;
+    r.adjustedScore = r.score;
+    r.correlationNote = null;
+
+    if(!best) return;
+
+    if(Math.abs(best.corr) >= CORR_STRONG && r.score !== 0 && best.otherScore !== 0){
+      const expectedSameSign = best.corr > 0;
+      const agree = expectedSameSign
+        ? Math.sign(r.score) === Math.sign(best.otherScore)
+        : Math.sign(r.score) !== Math.sign(best.otherScore);
+      if(agree){
+        r.adjustedScore = r.score + Math.sign(r.score);
+        r.correlationNote = { type:'confirm', partner:best.pair, corr:best.corr };
+      } else {
+        r.adjustedScore = r.score - Math.sign(r.score);
+        r.correlationNote = { type:'conflict', partner:best.pair, corr:best.corr };
+      }
+    } else if(Math.abs(best.corr) < CORR_WEAK){
+      r.correlationNote = { type:'independent', partner:best.pair, corr:best.corr };
+    }
+    r.adjustedScore = Math.max(-7, Math.min(7, r.adjustedScore));
+  });
 }
 
 function formatPrice(pair, value){
@@ -476,6 +634,35 @@ async function fetchSeries(pair, apiKey){
 }
 
 // ---------- rendering ----------
+function computeScanSummary(results){
+  let strongest = null;
+  results.forEach(r => {
+    if(r.bestPartner && (!strongest || Math.abs(r.bestPartner.corr) > Math.abs(strongest.corr))){
+      strongest = { pairA:r.pair, pairB:r.bestPartner.pair, corr:r.bestPartner.corr };
+    }
+  });
+  let weakest = null;
+  results.forEach(r => {
+    if(r.independence != null && (!weakest || r.independence < weakest.independence)){
+      weakest = { pair:r.pair, independence:r.independence };
+    }
+  });
+  return { strongest, weakest };
+}
+
+function renderScanSummary(summary){
+  if(!summary.strongest && !summary.weakest) return '';
+  let html = '';
+  if(summary.strongest){
+    const dir = summary.strongest.corr > 0 ? 'are moving together' : 'are moving opposite each other';
+    html += `<div class="summary-line"><span class="summary-tag strong">Strongest link</span>${summary.strongest.pairA} and ${summary.strongest.pairB} ${dir} right now (r=${summary.strongest.corr.toFixed(2)}) — if both show the same lean, treat that as one reinforced signal, not two independent ones.</div>`;
+  }
+  if(summary.weakest){
+    html += `<div class="summary-line"><span class="summary-tag weak">Most isolated</span>${summary.weakest.pair} has the weakest relationship with the rest of this scan (avg |r|=${summary.weakest.independence.toFixed(2)}) — its signal has no correlated pair backing it up either way, for better or worse.</div>`;
+  }
+  return html;
+}
+
 function verdictFromScore(score){
   if(score >= 3) return { label:'Strong buy', cls:'buy' };
   if(score >= 1) return { label:'Buy lean', cls:'buy' };
@@ -515,8 +702,33 @@ function renderExit(pair, result, direction){
     </div>`;
 }
 
+function renderCorrelation(result){
+  const note = result.correlationNote;
+  if(!note) return '';
+  const r = note.corr.toFixed(2);
+  if(note.type === 'confirm'){
+    return `
+      <div class="corr">
+        <span class="corr-badge confirm">✓ Confirmed</span>
+        <div class="corr-detail">${note.partner} moves with this pair (r=${r}) and currently agrees — confluence score raised from ${result.score} to ${result.adjustedScore}.</div>
+      </div>`;
+  }
+  if(note.type === 'conflict'){
+    return `
+      <div class="corr">
+        <span class="corr-badge conflict">⚠ Conflicting</span>
+        <div class="corr-detail">${note.partner} usually moves with this pair (r=${r}) but currently disagrees — confluence score lowered from ${result.score} to ${result.adjustedScore}. Treat with extra caution.</div>
+      </div>`;
+  }
+  return `
+    <div class="corr">
+      <span class="corr-badge independent">◇ Isolated mover</span>
+      <div class="corr-detail">No strongly correlated pair in this scan (closest: ${note.partner}, r=${r}) — this signal stands alone, without correlated confirmation.</div>
+    </div>`;
+}
+
 function renderCard(pair, result){
-  const v = verdictFromScore(result.score);
+  const v = verdictFromScore(result.adjustedScore);
   const direction = v.cls === 'buy' ? 'buy' : v.cls === 'sell' ? 'sell' : 'flat';
   return `
     <div class="card">
@@ -530,6 +742,7 @@ function renderCard(pair, result){
       ${renderMeter(result.signals)}
       ${renderChips(result.signals)}
       ${renderExit(pair, result, direction)}
+      ${renderCorrelation(result)}
     </div>`;
 }
 
@@ -558,7 +771,18 @@ async function runScan(){
     if(i < PAIRS.length-1) await sleep(7800);
   }
 
-  results.sort((a,b) => Math.abs(b.score) - Math.abs(a.score));
+  applyCorrelationAdjustments(results);
+  results.sort((a,b) => Math.abs(b.adjustedScore) - Math.abs(a.adjustedScore));
+
+  const summaryEl = document.getElementById('scanSummary');
+  const summary = computeScanSummary(results);
+  const summaryHtml = renderScanSummary(summary);
+  if(summaryHtml){
+    summaryEl.innerHTML = summaryHtml;
+    summaryEl.style.display = 'block';
+  } else {
+    summaryEl.style.display = 'none';
+  }
 
   if(results.length === 0){
     gridEl.innerHTML = '<div class="card empty">No results — check your API key and try again.</div>';
@@ -567,7 +791,7 @@ async function runScan(){
     gridEl.innerHTML = results.map(r => renderCard(r.pair, r)).join('');
     const msg = errors > 0
       ? `Scan complete with ${errors} pair(s) skipped (rate limit or bad symbol).`
-      : `Scan complete — ${results.length} pairs ranked by confluence strength.`;
+      : `Scan complete — ${results.length} pairs ranked by correlation-adjusted confluence strength.`;
     setStatus(msg, errors>0 ? 'err' : 'ok');
   }
 
@@ -576,6 +800,158 @@ async function runScan(){
 
 scanBtn.addEventListener('click', runScan);
 keyInput.addEventListener('keydown', e => { if(e.key==='Enter') runScan(); });
+
+// ---------- news / economic calendar (Finnhub) ----------
+const TRACKED_CURRENCIES = [...new Set(PAIRS.flatMap(p => p.split('/')))];
+
+// Finnhub's calendar reports by country code, not currency code — map between them.
+const CCY_TO_COUNTRY = { USD:'US', EUR:'EU', GBP:'GB', JPY:'JP', CHF:'CH', AUD:'AU', CAD:'CA', NZD:'NZ', MXN:'MX', ZAR:'ZA', TRY:'TR', SGD:'SG', NOK:'NO' };
+const COUNTRY_TO_CCY = Object.fromEntries(Object.entries(CCY_TO_COUNTRY).map(([k,v]) => [v,k]));
+const TRACKED_COUNTRIES = TRACKED_CURRENCIES.map(c => CCY_TO_COUNTRY[c]).filter(Boolean);
+
+// Keyword-matched plain-language context. Generic fallback covers anything unmatched.
+const EVENT_CONTEXT = [
+  { keys:['interest rate','rate decision'], what:'A central bank announces whether it is raising, cutting, or holding its benchmark interest rate.', why:'Rate changes shift how attractive a currency is to hold. Higher rates tend to draw in capital seeking yield, which can strengthen the currency; cuts tend to have the opposite effect.' },
+  { keys:['cpi','inflation','ppi'], what:'A government or statistics agency reports how much consumer or producer prices changed over the past month or year.', why:'Inflation readings shape expectations for future central bank rate moves. A hotter-than-expected number often raises rate-hike bets (currency-supportive); a cooler number often does the opposite.' },
+  { keys:['non-farm payroll','nonfarm payroll','employment change','unemployment','jobless'], what:'A labor market report on how many jobs were added or lost, and/or the unemployment rate.', why:'Employment data is a core input to central bank policy. Strong labor data can support a currency by raising rate-hike odds; weak data can weigh on it.' },
+  { keys:['gdp'], what:'A measure of the total economic output of a country over a quarter or year.', why:'GDP is a broad health check on an economy. Stronger-than-expected growth tends to support a currency; a miss tends to weigh on it.' },
+  { keys:['pmi','ism'], what:'A survey-based index of business activity in manufacturing or services, usually with 50 as the growth/contraction line.', why:'PMIs are one of the earliest available reads on an economy each month, so surprises can move markets ahead of slower official data.' },
+  { keys:['retail sales'], what:'A report on how much consumers spent at retailers over the past month.', why:'Consumer spending drives a large share of most economies, so this feeds into growth and inflation expectations.' },
+  { keys:['trade balance'], what:'The difference between a country\u2019s exports and imports over the period.', why:'A widening deficit or surplus can affect currency demand tied to trade flows, though it usually moves markets less than rate or inflation data.' },
+  { keys:['speech','testimony','press conference','speaks'], what:'A public appearance by a central bank official or policymaker.', why:'Officials can shift rate expectations with their tone alone, even without new data — markets parse these remarks closely for hints on future policy.' },
+  { keys:['consumer confidence','consumer sentiment'], what:'A survey of how optimistic or pessimistic consumers feel about the economy and their own finances.', why:'Confidence often leads actual spending, so it can hint at where retail sales and growth are headed next.' },
+  { keys:['pce'], what:'The Personal Consumption Expenditures price index — the Federal Reserve\u2019s preferred inflation gauge.', why:'Because the Fed weights this measure heavily in policy decisions, surprises here can move USD rate expectations directly.' }
+];
+
+function getEventContext(title){
+  const t = title.toLowerCase();
+  for(const entry of EVENT_CONTEXT){
+    if(entry.keys.some(k => t.includes(k))) return entry;
+  }
+  return {
+    what: 'A scheduled economic release or policy event for this currency.',
+    why: 'Scheduled releases can bring a short burst of volatility as traders reposition around the actual result versus what was expected.'
+  };
+}
+
+function pairsForCurrency(ccy){
+  return PAIRS.filter(p => p.split('/').includes(ccy));
+}
+
+function formatEventTime(date){
+  const now = new Date();
+  const diffMs = date - now;
+  const diffH = diffMs/3600000;
+  const dateStr = date.toLocaleString(undefined, { weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+  if(diffH < 0) return dateStr + ' (past)';
+  if(diffH < 1) return dateStr + ` · in ${Math.round(diffH*60)}m`;
+  if(diffH < 48) return dateStr + ` · in ${Math.round(diffH)}h`;
+  return dateStr;
+}
+
+let NEWS_EVENTS = [];
+const newsBtn = document.getElementById('newsBtn');
+const newsKeyInput = document.getElementById('newsApiKey');
+
+async function fetchNews(){
+  const stripEl = document.getElementById('newsStrip');
+  const apiKey = newsKeyInput.value.trim();
+  if(!apiKey){
+    stripEl.innerHTML = '<div class="news-empty">Enter your Finnhub API key above, then click Load calendar.</div>';
+    return;
+  }
+  stripEl.innerHTML = '<div class="news-empty">Loading calendar…</div>';
+  newsBtn.disabled = true;
+  try{
+    const today = new Date();
+    const in7 = new Date(today.getTime() + 7*24*3600000);
+    const fmt = d => d.toISOString().slice(0,10);
+    const url = `https://finnhub.io/api/v1/calendar/economic?from=${fmt(today)}&to=${fmt(in7)}&token=${encodeURIComponent(apiKey)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if(data.error){
+      // Finnhub returns this when a key lacks access to an endpoint (e.g. free-tier restriction).
+      stripEl.innerHTML = `<div class="news-empty">Finnhub says: "${data.error}" — this endpoint may require a paid Finnhub plan. Your key otherwise works fine for other data.</div>`;
+      return;
+    }
+    const rawEvents = data.economicCalendar || [];
+    const now = new Date();
+    NEWS_EVENTS = rawEvents
+      .filter(e => TRACKED_COUNTRIES.includes(e.country))
+      .map(e => ({
+        title: e.event,
+        country: COUNTRY_TO_CCY[e.country] || e.country,
+        impact: e.impact ? e.impact.charAt(0).toUpperCase()+e.impact.slice(1) : 'Low',
+        date: new Date((e.time||'').replace(' ','T')+'Z'),
+        forecast: e.estimate,
+        previous: e.prev
+      }))
+      .filter(e => !isNaN(e.date) && e.date > now)
+      .sort((a,b) => a.date - b.date)
+      .slice(0, 16);
+
+    if(NEWS_EVENTS.length === 0){
+      stripEl.innerHTML = '<div class="news-empty">No upcoming events found this week for your tracked currencies.</div>';
+      return;
+    }
+    stripEl.innerHTML = NEWS_EVENTS.map((e,i) => renderNewsCard(e,i)).join('');
+    stripEl.querySelectorAll('.news-card').forEach(card => {
+      card.addEventListener('click', () => openModal(NEWS_EVENTS[+card.dataset.idx]));
+    });
+  }catch(err){
+    console.error(err);
+    stripEl.innerHTML = '<div class="news-empty">Couldn\'t load the calendar — check your Finnhub key and connection, then try again.</div>';
+  }finally{
+    newsBtn.disabled = false;
+  }
+}
+
+function renderNewsCard(e, idx){
+  const impactCls = (e.impact||'Low').toLowerCase();
+  return `
+    <div class="news-card" data-idx="${idx}">
+      <div class="news-top">
+        <span class="news-ccy">${e.country}</span>
+        <span class="impact ${impactCls}">${e.impact}</span>
+      </div>
+      <div class="news-title">${e.title}</div>
+      <div class="news-time">${formatEventTime(e.date)}</div>
+    </div>`;
+}
+
+function openModal(e){
+  const ctx = getEventContext(e.title);
+  document.getElementById('modalTitle').textContent = e.title;
+  document.getElementById('modalMeta').innerHTML = `
+    <span>${e.country}</span>
+    <span class="impact ${(e.impact||'Low').toLowerCase()}">${e.impact} impact</span>
+    <span>${formatEventTime(e.date)}</span>
+    ${e.forecast ? `<span>Forecast: ${e.forecast}</span>` : ''}
+    ${e.previous ? `<span>Previous: ${e.previous}</span>` : ''}
+  `;
+  document.getElementById('modalWhat').textContent = ctx.what;
+  document.getElementById('modalWhy').textContent = ctx.why;
+  const pairs = pairsForCurrency(e.country);
+  document.getElementById('modalPairs').innerHTML = pairs.length
+    ? pairs.map(p => `<span>${p}</span>`).join('')
+    : '<span>None of your tracked pairs</span>';
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+
+function closeModal(){
+  document.getElementById('modalBackdrop').classList.remove('open');
+}
+
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalBackdrop').addEventListener('click', e => {
+  if(e.target.id === 'modalBackdrop') closeModal();
+});
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+newsBtn.addEventListener('click', fetchNews);
+newsKeyInput.addEventListener('keydown', e => { if(e.key==='Enter') fetchNews(); });
+document.getElementById('newsStrip').innerHTML = '<div class="news-empty">Enter your Finnhub API key above, then click Load calendar.</div>';
 </script>
 </body>
 </html>
